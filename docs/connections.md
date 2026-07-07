@@ -6,7 +6,7 @@ sidebar_position: 6
 
 # Connections
 
-A **connection** is a named, configured instance of a protocol plugin. Connections represent live sessions to external systems — a queue manager, an HTTP endpoint, an SMTP server, and so on.
+A **connection** is a saved configuration object used when executing actions and workflow steps.
 
 ---
 
@@ -14,121 +14,100 @@ A **connection** is a named, configured instance of a protocol plugin. Connectio
 
 | Term | Definition |
 |------|-----------|
-| **Plugin** | The protocol adapter (e.g. MSMQ, HTTP) |
-| **Connection** | A named, configured instance of a plugin |
-| **Connection state** | `Disconnected` → `Connecting` → `Connected` → `Error` |
-| **Connection config** | Key/value parameters specific to the plugin |
+| **Plugin** | The protocol adapter (`http`, `sql`, or custom) |
+| **Connection** | An object with `id`, `name`, `protocol`, and `config` |
+| **Connection config** | Key/value parameters merged into action params |
 
-A single plugin can have multiple connections. For example, you might have two MSMQ connections pointing at different queue managers.
-
----
-
-## Connection lifecycle
-
-```
-Create connection (via UI or agent.json)
-        │
-        ▼
-   Validate config
-        │
-        ▼
-   Plugin initialises transport
-        │
-        ▼
-   State: Connected
-        │
-        ├─── (normal operation)
-        │
-        └─── (transport error) ──▶ State: Error ──▶ Auto-retry
-```
+Connections are stored in-memory in the agent and can be listed, created, and deleted through the API.
 
 ---
 
-## Defining connections in agent.json
-
-Pre-configure connections so the agent creates them on startup:
+## Connection schema
 
 ```json
 {
-  "connections": [
-    {
-      "id": "orders-queue",
-      "plugin": "Wynbench.Plugin.Msmq",
-      "config": {
-        "queuePath": ".\\private$\\orders",
-        "accessMode": "ReadWrite"
-      }
-    },
-    {
-      "id": "erp-api",
-      "plugin": "Wynbench.Plugin.Http",
-      "config": {
-        "baseUrl": "https://erp.example.com/api",
-        "authType": "ApiKey",
-        "apiKeyHeader": "X-Api-Key",
-        "apiKeyValue": "${ERP_API_KEY}"
-      }
-    }
-  ]
+  "id": "local-http",
+  "name": "Local HTTP target",
+  "protocol": "http",
+  "config": {
+    "url": "https://example.com"
+  }
 }
 ```
 
-:::tip Environment variables
-Use `${VAR_NAME}` placeholders in connection config values to inject secrets from environment variables at runtime.
-:::
+---
+
+## API endpoints
+
+| Method | Path | Description |
+|------|------|-------------|
+| `POST` | `/connections` | Create a connection |
+| `GET` | `/connections` | List all connections |
+| `DELETE` | `/connections/{id}` | Delete a connection |
+
+### Create connection example
+
+```json
+{
+  "id": "local-http",
+  "name": "Local HTTP target",
+  "protocol": "http",
+  "config": {
+    "url": "https://example.com",
+    "method": "GET"
+  }
+}
+```
 
 ---
 
 ## Creating connections via the UI
 
 1. Open the **Connections** page in the UI.
-2. Click **New Connection**.
-3. Select a plugin from the dropdown.
-4. Fill in the plugin-specific fields.
-5. Click **Test** to verify connectivity.
-6. Click **Save**.
+2. Enter an ID, display name, and protocol.
+3. Provide JSON-backed config values through the form fields.
+4. Click **Create connection**.
 
 ---
 
-## Connection config reference by plugin
+## Config examples by protocol
 
 ### HTTP Plugin
 
 ```json
 {
-  "baseUrl": "https://api.example.com",
-  "authType": "None | ApiKey | ****** BasicAuth | OAuth2ClientCredentials",
-  "timeoutSeconds": 30
+  "url": "https://api.example.com/health",
+  "method": "GET"
 }
 ```
 
-### MSMQ Plugin
+### SQL Plugin (stub)
 
 ```json
 {
-  "queuePath": ".\\private$\\myqueue",
-  "accessMode": "Send | Receive | ReadWrite",
-  "recoverable": true
+  "dsn": "server=localhost;database=demo"
 }
 ```
 
 ---
 
-## Monitoring connection health
+## Listing connections
 
-The agent exposes connection state via the REST API and the WebSocket event stream:
+Use the REST API to inspect current connection objects:
 
 ```powershell
-Invoke-RestMethod http://localhost:5050/api/connections
+Invoke-RestMethod http://localhost:8080/connections
 ```
 
 ```json
 [
   {
-    "id": "orders-queue",
-    "plugin": "Wynbench.Plugin.Msmq",
-    "state": "Connected",
-    "connectedAt": "2025-01-01T08:00:00Z"
+    "id": "local-http",
+    "name": "Local HTTP target",
+    "protocol": "http",
+    "config": {
+      "url": "https://example.com"
+    }
   }
 ]
 ```

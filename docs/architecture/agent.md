@@ -6,72 +6,58 @@ sidebar_position: 1
 
 # Agent Architecture
 
-The Wynbench agent is the headless runtime at the heart of the platform. It is a .NET 8 host process responsible for:
+The Wynbench agent is a Go HTTP service that provides the backend runtime for connections, actions, and workflows.
 
-- Loading and hosting plugin modules
-- Managing named connection instances
-- Executing workflow definitions
-- Exposing an HTTP + WebSocket API for the UI
+It is responsible for:
+
+- Registering plugins at process startup
+- Managing in-memory connection and workflow stores
+- Executing actions and workflows through the engine
+- Exposing a JSON HTTP API used by the UI
 
 ---
 
 ## Internal structure
 
 ```
-WynbenchAgent.exe
+cmd/server/main.go
 │
-├── Configuration Loader      ← reads agent.json
-├── Plugin Host               ← discovers & loads .dll plugins
-│   └── IProtocolPlugin[]     ← one per loaded plugin
-├── Connection Manager        ← lifecycle of connection instances
-│   └── IConnection[]         ← active connections
-├── Workflow Engine           ← parses & runs workflow graphs
-│   ├── Trigger Evaluator
-│   ├── Action Dispatcher
-│   └── State Store           ← in-memory + optional persistence
-└── HTTP API (ASP.NET Core)
-    ├── REST  /api/...
-    └── WebSocket  /ws
+├── core.Register(http, sql)
+├── core.ConnectionStore
+├── core.WorkflowStore
+├── core.Engine
+└── api.Server + routes
 ```
 
 ---
 
-## Plugin loading
+## Plugin model
 
-On startup the agent scans the `pluginsPath` directory for assemblies that export one or more `IProtocolPlugin` implementations:
+Plugins implement the shared `core.Plugin` interface:
 
-```csharp
-// Plugin contract (simplified)
-public interface IProtocolPlugin
-{
-    string Name { get; }
-    string Version { get; }
-
-    IConnection CreateConnection(ConnectionConfig config);
-    IReadOnlyList<ActionDescriptor> GetActions();
+```go
+type Plugin interface {
+  Name() string
+  Configure(cfg map[string]any) error
+  Execute(action Action) (Result, error)
 }
 ```
 
-Plugins are loaded into isolated `AssemblyLoadContext` instances so that conflicting dependency versions cannot cause runtime errors.
+Built-in plugins are registered in `cmd/server/main.go`. Additional plugins can be added by implementing the same interface and registering them at startup.
 
 ---
 
 ## Workflow engine
 
-Workflows are represented as directed acyclic graphs (DAGs):
+Workflows are executed as ordered step lists:
 
 ```
-[Trigger]
-    │
-    ▼
 [Action A]
     │
-    ├── (on success) ──▶ [Action B]
-    │
-    └── (on failure) ──▶ [Notify]
+  └── (on success) ──▶ [Action B]
 ```
 
-Each node in the graph is an **action** provided by a plugin. The engine evaluates nodes depth-first, passing outputs from one action as inputs to the next.
+The engine stops on the first failed step and returns an aggregated `WorkflowRun` payload.
 
 ---
 
@@ -80,27 +66,16 @@ Each node in the graph is an **action** provided by a plugin. The engine evaluat
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/health` | Agent health and version |
-| `GET` | `/api/plugins` | List loaded plugins |
-| `GET` | `/api/connections` | List connection instances |
-| `POST` | `/api/connections` | Create a new connection |
-| `GET` | `/api/workflows` | List workflow definitions |
-| `POST` | `/api/workflows/{id}/run` | Trigger a workflow manually |
-| `WS` | `/ws` | Real-time event stream |
+| `GET` | `/connections` | List connections |
+| `POST` | `/connections` | Create a connection |
+| `DELETE` | `/connections/{id}` | Delete a connection |
+| `POST` | `/actions/execute` | Execute one action |
+| `POST` | `/workflows/run` | Execute inline or stored workflow |
 
 ---
 
-## Configuration reference
+## Runtime defaults
 
-```json
-{
-  "listenPort": 5050,
-  "pluginsPath": "./plugins",
-  "logLevel": "Information",
-  "connections": [],
-  "persistence": {
-    "enabled": false,
-    "provider": "sqlite",
-    "connectionString": "Data Source=wynbench.db"
-  }
-}
-```
+- Default address: `:8080`
+- CORS headers enabled for local browser clients
+- In-memory stores only (no persistence layer)

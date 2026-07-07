@@ -8,75 +8,64 @@ sidebar_position: 7
 
 ## Actions
 
-An **action** is the smallest unit of work in Wynbench. Each action is provided by a plugin and represents a single operation on a connection — sending a message, making an HTTP call, querying a database, and so on.
+An **action** is the smallest executable unit in Wynbench. Actions are dispatched to a plugin by name.
 
-### Action descriptor
+### Action payload schema
 
-```csharp
-public record ActionDescriptor(
-    string Id,           // e.g. "msmq.send"
-    string DisplayName,  // shown in the UI
-    string Description,
-    IReadOnlyList<ParameterDescriptor> Parameters,
-    IReadOnlyList<OutputDescriptor> Outputs
-);
+```json
+{
+  "plugin": "http",
+  "connection_id": "local-http",
+  "params": {
+    "url": "https://example.com",
+    "method": "GET"
+  }
+}
 ```
 
 ### Example actions
 
 | Plugin | Action ID | What it does |
 |--------|-----------|-------------|
-| MSMQ | `msmq.send` | Sends a message to a queue |
-| MSMQ | `msmq.receive` | Receives the next message from a queue |
-| HTTP | `http.get` | Performs a GET request |
-| HTTP | `http.post` | Performs a POST request with a body |
+| HTTP | `http` | Performs HTTP requests based on `params.url`, `params.method`, and optional `params.body` |
+| SQL (stub) | `sql` | Validates `params.query` and returns a stub result |
+
+Execute an action:
+
+```powershell
+Invoke-RestMethod http://localhost:8080/actions/execute -Method Post -ContentType 'application/json' -Body '{"plugin":"http","params":{"url":"https://example.com","method":"GET"}}'
+```
 
 ---
 
 ## Workflows
 
-A **workflow** is an ordered, directed graph of actions connected by transitions. Transitions can carry conditions, enabling branching and error-handling logic.
+A **workflow** is an ordered list of steps. Each step has a name and an embedded action.
 
 ### Workflow definition (JSON)
 
 ```json
 {
-  "id": "process-order",
-  "name": "Process Incoming Order",
-  "trigger": {
-    "type": "connection.message",
-    "connectionId": "orders-queue"
-  },
+  "name": "smoke-test",
   "steps": [
     {
-      "id": "step-1",
-      "actionId": "msmq.receive",
-      "connectionId": "orders-queue",
-      "parameters": {},
-      "transitions": [
-        { "to": "step-2", "condition": "success" },
-        { "to": "step-error", "condition": "failure" }
-      ]
+      "name": "fetch-homepage",
+      "action": {
+        "plugin": "http",
+        "connection_id": "local-http",
+        "params": {
+          "url": "https://example.com",
+          "method": "GET"
+        }
+      }
     },
     {
-      "id": "step-2",
-      "actionId": "http.post",
-      "connectionId": "erp-api",
-      "parameters": {
-        "path": "/orders",
-        "body": "{{step-1.outputs.messageBody}}"
-      },
-      "transitions": [
-        { "to": null, "condition": "success" }
-      ]
-    },
-    {
-      "id": "step-error",
-      "actionId": "http.post",
-      "connectionId": "notify-webhook",
-      "parameters": {
-        "path": "/alerts",
-        "body": "{\"error\": \"Order processing failed\"}"
+      "name": "run-query",
+      "action": {
+        "plugin": "sql",
+        "params": {
+          "query": "SELECT 1"
+        }
       }
     }
   ]
@@ -85,29 +74,12 @@ A **workflow** is an ordered, directed graph of actions connected by transitions
 
 ---
 
-## Triggers
+## Running a stored workflow
 
-Workflows are started by a **trigger**. Built-in trigger types:
+Send a stored workflow ID when the workflow already exists in the in-memory workflow store:
 
-| Trigger type | Description |
-|-------------|-------------|
-| `manual` | Started by an API call or UI button |
-| `schedule` | Runs on a cron schedule |
-| `connection.message` | Fires when a message arrives on a connection |
-| `connection.state` | Fires when a connection changes state |
-| `webhook` | Fires when the agent receives a POST to a dedicated URL |
-
----
-
-## Template expressions
-
-Step parameters support template expressions using `{{ }}` syntax:
-
-```
-{{step-1.outputs.messageBody}}   ← output of a previous step
-{{env.MY_VAR}}                   ← environment variable
-{{now}}                          ← current UTC timestamp (ISO 8601)
-{{workflowId}}                   ← current workflow ID
+```json
+{ "id": "stored-workflow-id" }
 ```
 
 ---
@@ -115,17 +87,17 @@ Step parameters support template expressions using `{{ }}` syntax:
 ## Workflow execution model
 
 ```
-Trigger fires
+Receive request
      │
      ▼
-Engine creates a Run instance
+Validate workflow payload
      │
      ▼
-Execute Step 1
+Execute step 1
      │
-     ├── success ──▶ Execute Step 2 ──▶ ... ──▶ Run completed
+  ├── success ──▶ Execute step 2 ──▶ ... ──▶ Run completed
      │
-     └── failure ──▶ Execute error step (if defined) ──▶ Run failed
+  └── failure ──▶ Stop execution and return failed run
 ```
 
-Each run is recorded with full input/output data and status, accessible from the **Workflows → Run History** UI panel.
+The response includes `workflow_id`, a `results` array, and the overall `success` value.

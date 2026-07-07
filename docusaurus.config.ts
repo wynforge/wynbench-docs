@@ -11,10 +11,10 @@ const config: Config = {
     v4: true,
   },
 
-  url: 'https://oswryn.github.io',
+  url: 'https://wynforge.github.io',
   baseUrl: '/wynbench-docs/',
 
-  organizationName: 'oswryn',
+  organizationName: 'wynforge',
   projectName: 'wynbench-docs',
 
   onBrokenLinks: 'throw',
@@ -35,7 +35,7 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/oswryn/wynbench-docs/edit/main/',
+          editUrl: 'https://github.com/wynforge/wynbench-docs/edit/main/',
         },
         blog: false,
         theme: {
@@ -65,7 +65,7 @@ const config: Config = {
           label: 'Docs',
         },
         {
-          href: 'https://github.com/oswryn/wynbench-docs',
+          href: 'https://github.com/wynforge/wynbench-docs',
           label: 'GitHub',
           position: 'right',
         },
@@ -87,7 +87,7 @@ const config: Config = {
           items: [
             {
               label: 'GitHub',
-              href: 'https://github.com/oswryn/wynbench-docs',
+              href: 'https://github.com/wynforge/wynbench-docs',
             },
           ],
         },

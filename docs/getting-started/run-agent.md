@@ -6,26 +6,21 @@ sidebar_position: 2
 
 # Run the Agent
 
-The Wynbench agent is a headless .NET process that manages connections, loads plugins, and executes workflows.
+The Wynbench agent is a Go HTTP server that manages connections, executes actions, and runs workflows.
 
 ## Start the agent
 
 Navigate to the agent directory and run:
 
 ```powershell
-cd C:\Wynbench\agent
-.\WynbenchAgent.exe
+cd D:\OpenSource\wynbench-agent
+go run ./cmd/server
 ```
 
 On first run you should see output similar to:
 
 ```
-[INFO] Wynbench Agent v1.0.0 starting...
-[INFO] Loading plugins from: .\plugins
-[INFO] Loaded plugin: Wynbench.Plugin.Msmq (v1.0.0)
-[INFO] Loaded plugin: Wynbench.Plugin.Http (v1.0.0)
-[INFO] Agent HTTP API listening on http://localhost:5050
-[INFO] Agent ready.
+wynbench-agent listening on :8080
 ```
 
 ---
@@ -36,44 +31,23 @@ On first run you should see output similar to:
 Start
   │
   ▼
-Load configuration (agent.json)
-  │
-  ▼
-Discover & initialise plugins
+Register built-in plugins
   │
   ▼
 Start HTTP API server
   │
   ▼
-Connect to pre-configured connections
-  │
-  ▼
-Execute scheduled / triggered workflows
-  │
-  ▼
-Idle — awaiting UI commands or triggers
+Handle connection/action/workflow requests
 ```
 
 ---
 
-## Running as a Windows Service
+## Change the listening address
 
-For production use, install the agent as a Windows Service:
-
-```powershell
-sc.exe create WynbenchAgent `
-  binPath= "C:\Wynbench\agent\WynbenchAgent.exe --service" `
-  start= auto `
-  DisplayName= "Wynbench Agent"
-
-sc.exe start WynbenchAgent
-```
-
-To stop and remove:
+Use `-addr` to override the default `:8080`:
 
 ```powershell
-sc.exe stop WynbenchAgent
-sc.exe delete WynbenchAgent
+go run ./cmd/server -addr :9090
 ```
 
 ---
@@ -83,17 +57,16 @@ sc.exe delete WynbenchAgent
 Once running, verify the agent is healthy:
 
 ```powershell
-Invoke-RestMethod http://localhost:5050/health
+Invoke-RestMethod http://localhost:8080/health
 ```
 
 Expected response:
 
 ```json
 {
-  "status": "Healthy",
-  "version": "1.0.0",
-  "plugins": ["Msmq", "Http"],
-  "connections": []
+  "status": "ok",
+  "plugins": ["http", "sql"],
+  "connections": 0
 }
 ```
 

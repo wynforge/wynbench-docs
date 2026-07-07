@@ -1,6 +1,6 @@
 # Wynbench Docs
 
-Documentation site for [Wynbench](https://github.com/oswryn/wynbench) — an intelligent workflow automation platform.
+Documentation site for Wynbench's current three-repository setup (`wynbench-agent`, `wynbench-ui`, and `wynbench-docs`).
 
 Built with [Docusaurus 3](https://docusaurus.io/).
 
@@ -102,10 +102,14 @@ The site respects the user's OS colour-scheme preference by default. A toggle bu
 
 ## Deployment
 
-The site is configured for GitHub Pages deployment under `oswryn.github.io/wynbench-docs/`. To deploy:
+The site is configured for GitHub Pages deployment under `wynforge.github.io/wynbench-docs/`. To deploy:
 
 ```bash
 GIT_USER=<your-github-username> npm run deploy
 ```
 
 Or let the CI pipeline handle it on every push to `main`.
+
+## Scope
+
+This documentation intentionally tracks the current Go agent and React UI implementation and avoids assumptions about older runtime stacks.

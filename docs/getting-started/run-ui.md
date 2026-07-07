@@ -6,49 +6,38 @@ sidebar_position: 3
 
 # Run the UI
 
-The Wynbench UI is a React single-page application (SPA) that connects to a running agent over HTTP and WebSocket.
+The Wynbench UI is a React single-page application (SPA) that connects to a running agent over HTTP.
 
 ## Prerequisites
 
-- The agent must already be [running](./run-agent) on `http://localhost:5050` (or your configured port).
+- The agent must already be [running](./run-agent) on `http://localhost:8080` (or your configured port).
 - Node.js 20+ installed (for local dev server).
 
 ---
 
-## Option 1 — Serve the pre-built UI
-
-The agent can host the compiled UI bundle directly. Place the contents of `ui/` inside `agent/wwwroot/`, then open:
-
-```
-http://localhost:5050
-```
-
----
-
-## Option 2 — Development server
+## Development server
 
 Clone the repository and start the Vite dev server:
 
 ```bash
-cd src/WynbenchUI
+cd wynbench-ui
 npm install
 npm run dev
 ```
 
-The dev server starts at `http://localhost:5173` and proxies API calls to `http://localhost:5050`.
+The dev server starts at `http://localhost:5173`.
 
 ---
 
 ## Connecting to the agent
 
-On first load the UI will prompt for the agent address:
+Set `VITE_WYNBENCH_AGENT_HTTP_URL` if your agent is not on the default address:
 
-```
-Agent URL:  http://localhost:5050
-            [Connect]
+```bash
+VITE_WYNBENCH_AGENT_HTTP_URL=http://localhost:8080
 ```
 
-Enter the address and click **Connect**. A green status indicator confirms the connection.
+If unset, the UI defaults to `http://localhost:8080`.
 
 ---
 
@@ -56,22 +45,22 @@ Enter the address and click **Connect**. A green status indicator confirms the c
 
 ```
 ┌──────────────────────────────────────────────────────┐
-│  Navbar  [ Workflows | Connections | Plugins | Logs ] │
+│  Sidebar [ Connections | Actions | Workflows | Results ]
 ├─────────────────────┬────────────────────────────────┤
-│   Sidebar           │   Canvas / Detail panel        │
+│   Navigation        │   Page content panel           │
 │                     │                                │
-│  ▸ My Workflows     │   (Drag-and-drop workflow      │
-│  ▸ Connections      │    designer or live monitor)   │
-│  ▸ Plugin Registry  │                                │
+│  ▸ Connections      │   Forms + execution results    │
+│  ▸ Actions          │                                │
+│  ▸ Workflows        │                                │
 └─────────────────────┴────────────────────────────────┘
 ```
 
 | Section | Purpose |
 |---------|---------|
-| **Workflows** | Create, edit, and run workflow definitions |
-| **Connections** | Manage connection instances per plugin |
-| **Plugins** | Browse loaded protocol adapters |
-| **Logs** | Real-time agent log stream |
+| **Connections** | Create, inspect, and delete stored agent connections |
+| **Actions** | Execute one action against a selected plugin/connection |
+| **Workflows** | Run ordered multi-step workflow payloads |
+| **Results** | Review successful runs and errors |
 
 ---
 
@@ -80,5 +69,5 @@ Enter the address and click **Connect**. A green status indicator confirms the c
 | Symptom | Likely cause | Fix |
 |---------|-------------|-----|
 | "Unable to connect" | Agent not running | Start the agent first |
-| CORS errors in browser console | Wrong agent URL | Check `listenPort` in `agent.json` |
-| Blank canvas | No workflows defined yet | Create a new workflow from the sidebar |
+| CORS errors in browser console | Agent not reachable or wrong port | Check the `go run ./cmd/server -addr ...` value |
+| Empty connection selector | No saved connections | Create a connection from the Connections page first |

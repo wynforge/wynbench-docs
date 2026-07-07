@@ -6,54 +6,52 @@ sidebar_position: 1
 
 # Wynbench Overview
 
-Wynbench is an **intelligent workflow automation platform** designed to connect disparate systems, execute multi-step actions, and surface real-time operational insight through a visual UI.
+Wynbench is a lightweight workflow execution stack composed of a Go agent, a React UI, and a Docusaurus documentation site.
 
-It is composed of four main parts that work together:
+It is composed of three repositories that work together:
 
 | Component | Role |
 |-----------|------|
-| **Agent** | Headless runtime that manages connections and executes workflows |
-| **UI** | Browser-based designer and monitoring dashboard |
-| **Plugins** | Protocol adapters that extend the agent's connectivity |
-| **Packager** | Build tool that bundles the platform for deployment |
+| **wynbench-agent** | Go backend runtime with plugin registry, connection store, action execution, and workflow execution |
+| **wynbench-ui** | Browser SPA for creating connections, running actions/workflows, and reviewing results |
+| **wynbench-docs** | Docusaurus docs aligned to the current agent/UI contract |
 
 ---
 
-## What problems does Wynbench solve?
+## What Wynbench supports today
 
-- **Legacy system integration** — connect MSMQ, COM-based services, and proprietary protocols alongside modern REST and message-bus systems.
-- **Workflow automation** — model multi-step business processes as directed graphs of actions and conditionals.
-- **Operational visibility** — monitor live workflow state, message throughput, and error conditions from a single dashboard.
-- **Reproducible deployments** — the packager produces a self-contained archive that can be installed on any supported Windows host.
+- **Protocol plugins** with a small core interface (`Name`, `Configure`, `Execute`).
+- **Connections** stored in-memory and reusable by actions/workflows.
+- **Single action execution** through `POST /actions/execute`.
+- **Workflow execution** through `POST /workflows/run` for inline or stored workflow IDs.
+- **Health probing** through `GET /health`.
 
 ---
 
 ## High-level architecture diagram
 
 ```
-┌─────────────────────────────────────────────────┐
-│                  Wynbench UI                    │
-│  (React SPA — workflow designer & dashboard)    │
-└───────────────────┬─────────────────────────────┘
-                    │ WebSocket / REST
-┌───────────────────▼─────────────────────────────┐
-│                 Wynbench Agent                  │
-│  ┌──────────┐  ┌──────────┐  ┌──────────────┐  │
-│  │ Workflow  │  │Connection│  │  Plugin Host │  │
-│  │ Engine   │  │ Manager  │  │              │  │
-│  └──────────┘  └────┬─────┘  └──────┬───────┘  │
-└───────────────────  │  ─────────────│───────────┘
-                      │               │
-           ┌──────────▼───────────────▼──────────┐
-           │           Plugin Modules             │
-           │  MSMQ Shim │ HTTP │ AMQP │  ...     │
-           └──────────────────────────────────────┘
+┌───────────────────────────────┐
+│          Wynbench UI          │
+│       (React + Vite SPA)      │
+└───────────────┬───────────────┘
+        │ HTTP JSON
+┌───────────────▼───────────────┐
+│        Wynbench Agent         │
+│  API + stores + engine +      │
+│      in-process plugins       │
+└───────────────┬───────────────┘
+        │
+    ┌───────▼────────┐
+    │ HTTP / SQL /   │
+    │ other plugins  │
+    └────────────────┘
 ```
 
 ---
 
 ## Next steps
 
-- [Install Wynbench](./getting-started/install) — set up the platform on your machine.
-- [Architecture deep-dive](./architecture/agent) — understand each component in detail.
-- [Plugin development guide](./plugin-development) — build your own protocol adapter.
+- [Install Wynbench](./getting-started/install) to set up a local development environment.
+- [Run the Agent](./getting-started/run-agent) to start the API server.
+- [Run the UI](./getting-started/run-ui) to connect and execute actions/workflows.
