@@ -15,8 +15,8 @@ type FeatureItem = {
 
 const features: FeatureItem[] = [
   {
-    title: 'Agent-Driven Automation',
-    icon: '🤖',
+    title: 'Backend-Agent-Driven Automation',
+    icon: 'smart_toy',
     description: (
       <>
         The Wynbench agent orchestrates workflows, manages connections to
@@ -26,7 +26,7 @@ const features: FeatureItem[] = [
   },
   {
     title: 'Extensible Plugin System',
-    icon: '🔌',
+    icon: 'extension',
     description: (
       <>
         Protocol modules snap into the agent at runtime. Build plugins for any
@@ -36,41 +36,11 @@ const features: FeatureItem[] = [
   },
   {
     title: 'Visual Workflow Designer',
-    icon: '🖥️',
+    icon: 'dashboard',
     description: (
       <>
         The Wynbench UI provides a drag-and-drop canvas for designing and
         monitoring workflows, with real-time status feedback.
-      </>
-    ),
-  },
-  {
-    title: 'MSMQ & Legacy Support',
-    icon: '📨',
-    description: (
-      <>
-        The MSMQ shim bridges modern workflow automation with classic Microsoft
-        Message Queue infrastructure, no refactor required.
-      </>
-    ),
-  },
-  {
-    title: 'One-Click Packaging',
-    icon: '📦',
-    description: (
-      <>
-        Bundle the agent, UI, and all selected plugins into a single deployable
-        archive with the Wynbench packager.
-      </>
-    ),
-  },
-  {
-    title: 'Dark & Light Mode',
-    icon: '🌙',
-    description: (
-      <>
-        Documentation adapts to your system preference. Switch between dark and
-        light themes at any time using the navbar toggle.
       </>
     ),
   },
@@ -79,7 +49,7 @@ const features: FeatureItem[] = [
 function Feature({ title, icon, description }: FeatureItem) {
   return (
     <div className={clsx('col col--4', styles.feature)}>
-      <div className={styles.featureIcon}>{icon}</div>
+      <div className={clsx(styles.featureIcon, styles.materialSymbol)}>{icon}</div>
       <Heading as="h3">{title}</Heading>
       <p>{description}</p>
     </div>

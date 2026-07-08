@@ -21,14 +21,11 @@ const sidebars: SidebarsConfig = {
         'architecture/agent',
         'architecture/ui',
         'architecture/plugins',
-        'architecture/packager',
       ],
     },
     'connections',
     'actions-and-workflows',
     'plugin-development',
-    'msmq-shim',
-    'packaging-and-deployment',
   ],
 };
 

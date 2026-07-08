@@ -28,6 +28,7 @@ type Plugin interface {
 cmd/server/main.go
     core.Register(httpplugin.New())
     core.Register(sqlplugin.New())
+    core.Register(kafkaplugin.New())
 ```
 
 Plugins are keyed by `Name()` in a registry map and looked up at action execution time.
@@ -40,12 +41,13 @@ Plugins are keyed by `Name()` in a registry map and looked up at action executio
 |--------|----------|-------|
 | `http` | HTTP/HTTPS | Functional plugin for basic GET/POST style requests |
 | `sql` | SQL | Stub plugin that validates query payloads and returns placeholder rows |
+| `kafka` | Kafka | Produces messages to Kafka topics, with optional Avro schema encoding |
 
 ---
 
 ## Execution flow
 
-Each plugin assembly is loaded into a dedicated `AssemblyLoadContext`:
+Wynbench executes plugin actions through the Go engine and registry:
 
 ```
 Action payload

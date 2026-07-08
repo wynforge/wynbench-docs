@@ -6,175 +6,143 @@ sidebar_position: 8
 
 # Plugin Development Guide
 
-This guide walks through building a Wynbench protocol plugin from scratch. Plugins are .NET 8 class libraries that implement the `IProtocolPlugin` interface.
+This guide walks through building a Wynbench protocol plugin for the Go agent. Plugins are Go types that implement the `core.Plugin` interface and are registered with the agent at startup.
 
 ---
 
 ## 1. Create the project
 
+Create a new Go module for your plugin. In the Wynbench repo, plugin packages typically live under `plugins/`.
+
 ```bash
-dotnet new classlib -n Wynbench.Plugin.MyProtocol --framework net8.0
-cd Wynbench.Plugin.MyProtocol
-dotnet add package Wynbench.Plugin.Abstractions
+mkdir -p plugins/myprotocol
+cd plugins/myprotocol
+go mod init github.com/wynforge/wynbench-agent/plugins/myprotocol
+go get github.com/wynforge/wynbench-agent/core
 ```
 
 ---
 
-## 2. Implement `IProtocolPlugin`
+## 2. Implement `core.Plugin`
 
-```csharp
-using Wynbench.Plugin.Abstractions;
+Create a plugin type that satisfies the `core.Plugin` interface.
 
-namespace Wynbench.Plugin.MyProtocol;
+```go
+package myprotocol
 
-public class MyProtocolPlugin : IProtocolPlugin
-{
-    public string Name => "MyProtocol";
-    public string Version => "1.0.0";
+import (
+    "github.com/wynforge/wynbench-agent/core"
+)
 
-    public IConnection CreateConnection(ConnectionConfig config)
-    {
-        // Validate required fields
-        if (!config.TryGetValue("serverUrl", out var serverUrl))
-            throw new ArgumentException("'serverUrl' is required");
+type Plugin struct{}
 
-        return new MyProtocolConnection(serverUrl);
+func New() *Plugin {
+    return &Plugin{}
+}
+
+func (p *Plugin) Name() string {
+    return "myprotocol"
+}
+
+func (p *Plugin) Configure(cfg map[string]any) error {
+    // Validate connection config here.
+    if _, ok := cfg["serverUrl"].(string); !ok {
+        return nil
+    }
+    return nil
+}
+
+func (p *Plugin) Execute(action core.Action) (core.Result, error) {
+    switch action.Plugin {
+    case "myprotocol.send":
+        return p.send(action)
+    default:
+        return core.Result{Success: false, Error: "unknown action"}, nil
+    }
+}
+
+func (p *Plugin) send(action core.Action) (core.Result, error) {
+    payload, ok := action.Params["payload"].(string)
+    if !ok || payload == "" {
+        return core.Result{Success: false, Error: "missing payload"}, nil
     }
 
-    public IReadOnlyList<ActionDescriptor> GetActions() =>
-    [
-        new ActionDescriptor(
-            Id: "myprotocol.send",
-            DisplayName: "Send Message",
-            Description: "Sends a message to the remote server.",
-            Parameters:
-            [
-                new ParameterDescriptor("payload", "string", required: true,
-                    description: "The message payload to send.")
-            ],
-            Outputs: [new OutputDescriptor("statusCode", "int")]
-        ),
-    ];
+    // TODO: send payload using action params + connection config.
+
+    return core.Result{Success: true, Data: map[string]any{"statusCode": 200}}, nil
 }
 ```
 
 ---
 
-## 3. Implement `IConnection`
+## 3. Register the plugin
 
-```csharp
-using Wynbench.Plugin.Abstractions;
+Import and register your plugin in `cmd/server/main.go`:
 
-namespace Wynbench.Plugin.MyProtocol;
+```go
+import (
+    "github.com/wynforge/wynbench-agent/core"
+    myprotocol "github.com/wynforge/wynbench-agent/plugins/myprotocol"
+)
 
-public class MyProtocolConnection : IConnection
-{
-    private readonly string _serverUrl;
-    private ConnectionState _state = ConnectionState.Disconnected;
-
-    public MyProtocolConnection(string serverUrl)
-    {
-        _serverUrl = serverUrl;
-    }
-
-    public ConnectionState State => _state;
-
-    public async Task ConnectAsync(CancellationToken cancellationToken = default)
-    {
-        // TODO: open transport to _serverUrl
-        _state = ConnectionState.Connected;
-        await Task.CompletedTask;
-    }
-
-    public async Task DisconnectAsync(CancellationToken cancellationToken = default)
-    {
-        // TODO: close transport
-        _state = ConnectionState.Disconnected;
-        await Task.CompletedTask;
-    }
-
-    public async Task<ActionResult> ExecuteActionAsync(
-        string actionId,
-        IDictionary<string, object> parameters,
-        CancellationToken cancellationToken = default)
-    {
-        return actionId switch
-        {
-            "myprotocol.send" => await SendAsync(parameters, cancellationToken),
-            _ => ActionResult.Failure($"Unknown action: {actionId}")
-        };
-    }
-
-    private async Task<ActionResult> SendAsync(
-        IDictionary<string, object> parameters,
-        CancellationToken cancellationToken)
-    {
-        var payload = parameters["payload"].ToString()!;
-
-        // TODO: transmit payload
-        await Task.CompletedTask;
-
-        return ActionResult.Success(new Dictionary<string, object>
-        {
-            ["statusCode"] = 200
-        });
-    }
+func main() {
+    core.Register(myprotocol.New())
+    // ...
 }
 ```
+
+Plugins are discovered by name at runtime through the Go plugin registry.
 
 ---
 
 ## 4. Deploy the plugin
 
-1. Build the plugin:
+1. Build the agent with your plugin package included:
 
 ```bash
-dotnet build --configuration Release
+go build ./cmd/server
 ```
 
-2. Copy the output DLL to the agent's `plugins/` directory:
-
-```powershell
-Copy-Item bin\Release\net8.0\Wynbench.Plugin.MyProtocol.dll `
-    C:\Wynbench\agent\plugins\
-```
-
-3. Restart the agent. The new plugin should appear in the agent log:
-
-```
-[INFO] Loaded plugin: MyProtocol (v1.0.0)
-```
+2. Restart the agent. Your plugin will be available when the agent starts and registers it in `cmd/server/main.go`.
 
 ---
 
 ## 5. Best practices
 
-- **Validate config eagerly** in `CreateConnection` and throw descriptive `ArgumentException` messages — these are surfaced in the UI.
-- **Never throw from `ExecuteActionAsync`** — return `ActionResult.Failure(message)` instead.
-- **Implement `IAsyncDisposable`** on your connection to clean up resources when the agent shuts down.
-- **Avoid static mutable state** — multiple connection instances of the same plugin type may run concurrently.
-- **Target `net8.0`** and avoid depending on types from `System.Messaging` directly; use the MSMQ shim if you need queuing.
+- **Validate config in `Configure`** and return an error if required values are missing.
+- **Return failures in `core.Result`** instead of panicking.
+- **Avoid global mutable state** because the agent can execute multiple actions concurrently.
+- **Keep plugin logic stateless** where possible and rely on `action.Params` plus connection config.
 
 ---
 
 ## 6. Testing your plugin
 
-```csharp
-[Fact]
-public async Task SendAsync_ReturnsSuccess()
-{
-    var plugin = new MyProtocolPlugin();
-    var connection = plugin.CreateConnection(new ConnectionConfig
-    {
-        ["serverUrl"] = "http://localhost:9999"
-    });
+Use normal Go tests for your plugin implementation.
 
-    await connection.ConnectAsync();
+```go
+package myprotocol_test
 
-    var result = await connection.ExecuteActionAsync("myprotocol.send",
-        new Dictionary<string, object> { ["payload"] = "hello" });
+import (
+    "testing"
 
-    Assert.True(result.Succeeded);
+    "github.com/wynforge/wynbench-agent/plugins/myprotocol"
+    "github.com/wynforge/wynbench-agent/core"
+)
+
+func TestSendAction(t *testing.T) {
+    plugin := myprotocol.New()
+
+    result, err := plugin.Execute(core.Action{
+        Plugin: "myprotocol.send",
+        Params: map[string]any{"payload": "hello"},
+    })
+    if err != nil {
+        t.Fatalf("unexpected error: %v", err)
+    }
+    if !result.Success {
+        t.Fatalf("expected success, got: %s", result.Error)
+    }
 }
 ```
 
@@ -183,4 +151,3 @@ public async Task SendAsync_ReturnsSuccess()
 ## See also
 
 - [Plugin Architecture](./architecture/plugins)
-- [MSMQ Shim](./msmq-shim) — reference implementation

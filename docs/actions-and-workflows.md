@@ -84,6 +84,21 @@ Send a stored workflow ID when the workflow already exists in the in-memory work
 
 ---
 
+## Stored workflow management
+
+Wynbench also supports creating, listing, updating, and deleting stored workflows through the API.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/workflows` | List stored workflows |
+| `POST` | `/workflows` | Create a new workflow |
+| `PUT` | `/workflows/{id}` | Update an existing workflow |
+| `DELETE` | `/workflows/{id}` | Delete a workflow |
+
+Stored workflows are persisted to the agent's local config file, so they can be restored when the agent restarts.
+
+---
+
 ## Workflow execution model
 
 ```

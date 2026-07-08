@@ -4,7 +4,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
   title: 'Wynbench',
-  tagline: 'Intelligent workflow automation — agent, UI, plugins, and packager.',
+  tagline: 'Intelligent workflow automation — agent, UI, and plugins.',
   favicon: 'img/favicon.ico',
 
   future: {
@@ -92,7 +92,7 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} Wynbench. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} Wynbench.`,
     },
     prism: {
       theme: prismThemes.github,

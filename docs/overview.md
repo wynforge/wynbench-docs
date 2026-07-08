@@ -6,15 +6,14 @@ sidebar_position: 1
 
 # Wynbench Overview
 
-Wynbench is a lightweight workflow execution stack composed of a Go agent, a React UI, and a Docusaurus documentation site.
+Wynbench is a lightweight workflow execution stack composed of a Go agent and a React UI.
 
-It is composed of three repositories that work together:
+It is composed of two core repositories that work together:
 
 | Component | Role |
 |-----------|------|
 | **wynbench-agent** | Go backend runtime with plugin registry, connection store, action execution, and workflow execution |
 | **wynbench-ui** | Browser SPA for creating connections, running actions/workflows, and reviewing results |
-| **wynbench-docs** | Docusaurus docs aligned to the current agent/UI contract |
 
 ---
 
@@ -22,6 +21,7 @@ It is composed of three repositories that work together:
 
 - **Protocol plugins** with a small core interface (`Name`, `Configure`, `Execute`).
 - **Connections** stored in-memory and reusable by actions/workflows.
+- **Connection and workflow persistence** to a local config file.
 - **Single action execution** through `POST /actions/execute`.
 - **Workflow execution** through `POST /workflows/run` for inline or stored workflow IDs.
 - **Health probing** through `GET /health`.

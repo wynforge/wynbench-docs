@@ -12,6 +12,7 @@ It is responsible for:
 
 - Registering plugins at process startup
 - Managing in-memory connection and workflow stores
+- Persisting connections and workflows to a local config file
 - Executing actions and workflows through the engine
 - Exposing a JSON HTTP API used by the UI
 
@@ -53,7 +54,7 @@ Workflows are executed as ordered step lists:
 
 ```
 [Action A]
-    │
+  │
   └── (on success) ──▶ [Action B]
 ```
 
@@ -70,7 +71,15 @@ The engine stops on the first failed step and returns an aggregated `WorkflowRun
 | `POST` | `/connections` | Create a connection |
 | `DELETE` | `/connections/{id}` | Delete a connection |
 | `POST` | `/actions/execute` | Execute one action |
+| `GET` | `/workflows` | List stored workflows |
+| `POST` | `/workflows` | Create a workflow |
+| `PUT` | `/workflows/{id}` | Update a workflow |
+| `DELETE` | `/workflows/{id}` | Delete a workflow |
 | `POST` | `/workflows/run` | Execute inline or stored workflow |
+| `GET` | `/kafka/messages` | Preview Kafka topic messages |
+| `GET` | `/config/export` | Export persisted connections/workflows |
+| `POST` | `/config/import` | Import persisted connections/workflows |
+| `GET` | `/config/path` | Get persisted config file path |
 
 ---
 
