@@ -93,8 +93,8 @@ export default function Home(): ReactNode {
         <section className={styles.features}>
           <div className="container">
             <div className="row">
-              {features.map((props, idx) => (
-                <Feature key={idx} {...props} />
+              {features.map((props) => (
+                <Feature key={props.title} {...props} />
               ))}
             </div>
           </div>
