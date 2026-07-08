@@ -1,0 +1,83 @@
+/**
+ * Wynbench Docs — custom CSS overrides.
+ * Docusaurus uses CSS variables for theming; see:
+ * https://docusaurus.io/docs/styling-layout#styling-your-site-with-infima
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0&display=swap');
+
+/* Light mode */
+:root {
+  --ifm-color-primary: #0f766e;
+  --ifm-color-primary-dark: #0d665f;
+  --ifm-color-primary-darker: #0b5c55;
+  --ifm-color-primary-darkest: #094842;
+  --ifm-color-primary-light: #128a81;
+  --ifm-color-primary-lighter: #15a095;
+  --ifm-color-primary-lightest: #2bb7ac;
+  --ifm-code-font-size: 95%;
+  --ifm-font-family-base: 'Space Grotesk', 'Segoe UI', sans-serif;
+  --ifm-font-family-monospace: 'IBM Plex Mono', 'Cascadia Code', monospace;
+  --ifm-background-color: #f4f9fa;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+}
+
+/* Dark mode */
+[data-theme='dark'] {
+  --ifm-color-primary: #2bb7ac;
+  --ifm-color-primary-dark: #25a198;
+  --ifm-color-primary-darker: #209287;
+  --ifm-color-primary-darkest: #1a746c;
+  --ifm-color-primary-light: #45c6bc;
+  --ifm-color-primary-lighter: #63d2c9;
+  --ifm-color-primary-lightest: #8ce1da;
+  --ifm-background-color: #091221;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+}
+
+.hero {
+  background:
+    radial-gradient(circle at 12% 8%, rgba(15, 118, 110, 0.24), transparent 24rem),
+    radial-gradient(circle at 88% 6%, rgba(20, 184, 166, 0.2), transparent 22rem),
+    linear-gradient(135deg, rgba(9, 18, 33, 0.98), rgba(14, 27, 45, 0.98));
+}
+
+/* Keep hero title/subtitle readable over rich gradients in both themes. */
+.hero .hero__title,
+.hero .hero__subtitle {
+  color: #f8fcff;
+  text-shadow: 0 2px 16px rgba(3, 12, 22, 0.45);
+}
+
+/* Improve light-mode contrast for the secondary call-to-action button. */
+.hero .button.button--outline.button--secondary {
+  color: #0b3f3a;
+  border-color: #0b5c55;
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.hero .button.button--outline.button--secondary:hover {
+  color: #072f2b;
+  border-color: #094842;
+  background: rgba(255, 255, 255, 0.96);
+}
+
+/* In dark mode, enforce bright hero copy and increase CTA legibility. */
+[data-theme='dark'] .hero .hero__title,
+[data-theme='dark'] .hero .hero__subtitle {
+  color: #f3fdff;
+  text-shadow: 0 3px 18px rgba(2, 8, 16, 0.65);
+}
+
+[data-theme='dark'] .hero .button.button--outline.button--secondary {
+  color: #dff9f6;
+  border-color: #63d2c9;
+  background: rgba(9, 27, 41, 0.56);
+}
+
+[data-theme='dark'] .hero .button.button--outline.button--secondary:hover {
+  color: #f4fffd;
+  border-color: #8ce1da;
+  background: rgba(11, 39, 57, 0.75);
+}
