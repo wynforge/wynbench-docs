@@ -31,6 +31,8 @@ Create a plugin type that satisfies the `core.Plugin` interface.
 package myprotocol
 
 import (
+    "fmt"
+
     "github.com/wynforge/wynbench-agent/core"
 )
 
@@ -45,9 +47,9 @@ func (p *Plugin) Name() string {
 }
 
 func (p *Plugin) Configure(cfg map[string]any) error {
-    // Validate connection config here.
-    if _, ok := cfg["serverUrl"].(string); !ok {
-        return nil
+    serverUrl, ok := cfg["serverUrl"].(string)
+    if !ok || serverUrl == "" {
+        return fmt.Errorf("missing serverUrl")
     }
     return nil
 }
