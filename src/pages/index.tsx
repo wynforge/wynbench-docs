@@ -49,7 +49,7 @@ const features: FeatureItem[] = [
 function Feature({ title, icon, description }: FeatureItem) {
   return (
     <div className={clsx('col col--4', styles.feature)}>
-      <div className={clsx(styles.featureIcon, styles.materialSymbol)}>{icon}</div>
+      <div className={clsx(styles.featureIcon, styles.materialSymbol)} aria-hidden="true">{icon}</div>
       <Heading as="h3">{title}</Heading>
       <p>{description}</p>
     </div>
