@@ -12,10 +12,8 @@ The Wynbench agent is a Go HTTP server that manages connections, executes action
 
 Navigate to the agent directory and run:
 
-```powershell
-cd D:\OpenSource\wynbench-agent
-go run ./cmd/server
-```
+    cd wynbench-agent
+    go run ./cmd/server
 
 On first run you should see output similar to:
 
